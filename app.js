@@ -116,7 +116,7 @@ app.get(`/${redirectURI}`, async (req, res) => {
   res.cookie(process.env.COOKIE_NAME, token, {
     maxAge: 900000,
     httpOnly: true,
-    secure: false,
+    secure: process.env.ENVIRONMENT === "dev" ? false : true,
   });
 
   res.redirect(process.env.UI_ROOT_URI);
