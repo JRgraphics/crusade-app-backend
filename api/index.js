@@ -71,9 +71,9 @@ app.post("/auth/google", async (req, res) => {
     res
       .status(200)
       .cookie(process.env.COOKIE_NAME, token, {
-        httpOnly: false,
+        httpOnly: true,
         sameSite: "Strict",
-        secure: false, // Set to true in production when using HTTPS
+        secure: true, // Set to true in production when using HTTPS
         maxAge: 86400000, // 1 day in milliseconds
       })
       .json({ message: "Authentication successful", user });
