@@ -17,10 +17,6 @@ const { PGHOST, PGDATABASE, PGUSER, PGPASSWORD } = process.env;
 const sql = neon(
   `postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}/${PGDATABASE}?sslmode=require`
 );
-// async function getArmyLists() {
-//   const result = await sql`SELECT * from army_lists`;
-//   console.log(result[0]);
-// }
 
 const port = 4000;
 
