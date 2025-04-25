@@ -17,7 +17,7 @@ const PORT = 3000;
 const client = new OAuth2Client();
 const JWT_SECRET = process.env.JWT_SECRET;
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: process.env.CORS_ORIGIN,
   credentials: true,
 };
 
