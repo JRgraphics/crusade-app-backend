@@ -1,17 +1,23 @@
 require("dotenv").config();
+
+const { neon } = require("@neondatabase/serverless");
+const { PGHOST, PGDATABASE, PGUSER, PGPASSWORD } = process.env;
+const sql = neon(
+  `postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}/${PGDATABASE}?sslmode=require`
+);
+
 const express = require("express");
 const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const sql = require("./dbaccess");
 
 const app = express();
 const PORT = 3000;
 const client = new OAuth2Client();
 const JWT_SECRET = process.env.JWT_SECRET;
 const corsOptions = {
-  origin: ["http://localhost:5173", "https://crusade-app-frontend.vercel.app/"],
+  origin: "http://localhost:5173",
   credentials: true,
 };
 
@@ -22,19 +28,21 @@ app.use(cookieParser());
 app.post("/auth/google", async (req, res) => {
   const { authorization } = req.headers;
   const { clientId } = req.body;
+  const { login } = req.query;
   const client_id = clientId;
   let auth_token = null;
-  try {
-    const secret = jwt.verify(
-      req.headers["authorization"],
-      process.env.JWT_SECRET
-    );
-    auth_token = secret.auth_token;
-  } catch (error) {
-    auth_token = null;
-  }
 
-  console.log(auth_token);
+  if (!login) {
+    try {
+      const secret = jwt.verify(authorization, process.env.JWT_SECRET);
+      console.log(secret);
+      auth_token = secret.auth_token;
+    } catch (error) {
+      auth_token = null;
+    }
+
+    console.log(auth_token);
+  }
 
   try {
     // Verify the ID token with Google's API
@@ -58,22 +66,22 @@ app.post("/auth/google", async (req, res) => {
 
     // Generate a JWT token
     const token = jwt.sign(
-      { email: user.email, auth_token: authorization },
+      { email: user.email, auth_token: auth_token || authorization },
       JWT_SECRET,
       {
-        expiresIn: "1d", // Adjust expiration time as needed
+        expiresIn: "5h", // Adjust expiration time as needed
       }
     );
 
     // Send the token as a cookie and response
-    const result = await sql`SELECT * from army_lists WHERE owner=${email}`;
-    console.log(result[0]);
+    // const result = await sql`SELECT * from army_lists WHERE owner=${email}`;
+    // console.log(result[0]);
     res
       .status(200)
       .cookie(process.env.COOKIE_NAME, token, {
-        httpOnly: true,
-        sameSite: "Strict",
-        secure: true, // Set to true in production when using HTTPS
+        httpOnly: false,
+        // sameSite: "Strict",
+        secure: false, // Set to true in production when using HTTPS
         maxAge: 86400000, // 1 day in milliseconds
       })
       .json({ message: "Authentication successful", user });
@@ -81,6 +89,10 @@ app.post("/auth/google", async (req, res) => {
     console.log(err);
     res.status(400).json({ error: "Authentication failed", details: err });
   }
+});
+
+app.get("/test", (req, res) => {
+  res.status(200).send("Test");
 });
 
 app.listen(PORT, () => console.log(`Server running on PORT : ${PORT}`));
